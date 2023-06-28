@@ -1,4 +1,4 @@
-![grafik](https://github.com/ryanrudak/diverses/assets/51046918/8d1f0d4d-974a-45ab-9e3e-7b0793e014a4)# diverses
+# diverses
 Mount-DiskImage (ISO Mounts)
 
 
