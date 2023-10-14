@@ -1,4 +1,7 @@
 
+https://github.com/glueckkanja-pki/PKI-Configuration-Tools/blob/master/ActivateSignatures.ps1
+
+
 https://www.anreiter.at/windows-10-setup-mit-autounattend-xml/
 
 https://learn.microsoft.com/de-de/windows-hardware/manufacture/desktop/add-a-custom-script-to-windows-setup?view=windows-11
