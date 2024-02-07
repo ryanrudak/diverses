@@ -1,0 +1,58 @@
+Clear-Host
+
+# Fehlervariable leeren 
+$Error.Clear()
+
+# Online die Gruppenzugehörigkeit ermitteln
+$result = net.exe user $env:username /domain | findstr "G-DLP-"
+# falls Fehler direkt nach dem net Befehl in eine Variable umleiten - z.B. falls keine Netzwerkverbindung oder Domäne nicht erreichbar
+$netERR = $Error
+write-host ""
+write-host ""
+write-host ""
+
+# falls ein Fehler auftritt, auf die offline Variante whoami /groups ausweichen
+If ( $netERR -like "*Die angegebene Dom*ne ist nicht vorhanden, oder es konnte keine Verbindung hergestellt werden*") { 
+    write-host "Fehler bei Abfrage mit net.exe - weiter mit whoami /groups"
+    # $result = whoami /groups | findstr "G-DLP-"
+    $result = ((whoami /groups /FO csv | ConvertFrom-Csv).Gruppenname)
+    $result = $result | where { $_ -like "*G-DLP-*" }
+    $result
+    $res = $result.replace("JOTH\","")
+    $res
+    
+    ForEach ( $DLPGruppe in $DLPGruppen ) {
+    
+        Write-Host "DLP Gruppe: $DLPGruppe"
+        Write-host ""
+        $adDLPGruppe = ([adsisearcher]"(&(cn=$DLPGruppe)(objectclass=group))").FindOne().Properties["cn"]
+        Write-Host "  AD DLP Gruppe: $adDLPGruppe"
+        Write-host ""    
+
+} else {
+    # Leerzeichen aus der Variable löschen; '*' aus der Variable löschen
+    $result = $result.trim(); $result = $result.replace("*", "")
+    # '*' an die ermittelten Gruppen anhängen - für die Suche mittels ADSISEARCHER.
+    $DLPGruppen = $result | % { $_ + "*" }
+
+    # Ausgabe der Gruppen zu Debugzwecken - später raus
+    $DLPGruppen
+
+    Write-host ""
+
+    # Schleife für jede Gruppe 
+    ForEach ( $DLPGruppe in $DLPGruppen ) {
+    
+        Write-Host "DLP Gruppe: $DLPGruppe"
+        Write-host ""
+        $adDLPGruppe = ([adsisearcher]"(&(cn=$DLPGruppe)(objectclass=group))").FindOne().Properties["cn"]
+        Write-Host "  AD DLP Gruppe: $adDLPGruppe"
+        Write-host ""    
+    } # ForEach
+
+} # if-else
+
+
+# ADSI Searcher
+# ([adsisearcher]'(&(cn=G-DLP-GVM*)(objectclass=group))').FindOne().Properties["cn"]
+
