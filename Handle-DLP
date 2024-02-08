@@ -1,13 +1,35 @@
+
 Clear-Host
 
+# Variablen definieren
+$DLPGruppe = $null; $DLPGruppen = $null; $res = $null; $result = $null
 # Fehlervariable leeren 
 $Error.Clear()
 
+# Gruppen mittels whoami ermitteln - DLP Gruppen filtern und Spalte Gruppenname und SID auswählen
+$whoamiGroups = ((whoami /groups /FO csv | ConvertFrom-Csv | where { $_ -like "*G-DLP-*" } | Select-Object Gruppenname, SID))
+
+If ( ((whoami /groups /FO csv | ConvertFrom-Csv | where { $_ -like "*G-DLP-*" } | Select-Object Gruppenname, SID)) ) {
+    # Gruppen mittels whoami ermitteln - DLP Gruppen filtern und Spalte Gruppenname und SID auswählen
+    $whoamiGroups = ((whoami /groups /FO csv | ConvertFrom-Csv | where { $_ -like "*G-DLP-*" } | Select-Object Gruppenname, SID))
+
+} else {
+    $offlineGroups = ((whoami /groups /FO csv | ConvertFrom-Csv |  where { $_ -like "*Unbekannter SID-Typ*" } | Select-Object Gruppenname, Typ, SID))
+    ForEach ( $gruppe in $offlineGroups  ) {
+        write-host $gruppe
+
+        # Vergleich mit gespeicherter SID, wenn vorhanden dann alles so lassen,
+        # wenn nicht vorhanden, dann DLP Rückbau und zcm aktualisieren
+    
+    } # else
+} # If
+
+
+# ((whoami /groups /FO csv | ConvertFrom-Csv).Gruppenname)
 # Online die Gruppenzugehörigkeit ermitteln
 $result = net.exe user $env:username /domain | findstr "G-DLP-"
 # falls Fehler direkt nach dem net Befehl in eine Variable umleiten - z.B. falls keine Netzwerkverbindung oder Domäne nicht erreichbar
 $netERR = $Error
-write-host ""
 write-host ""
 write-host ""
 
@@ -25,11 +47,14 @@ If ( $netERR -like "*Die angegebene Dom*ne ist nicht vorhanden, oder es konnte k
     
         Write-Host "DLP Gruppe: $DLPGruppe"
         Write-host ""
-        $adDLPGruppe = ([adsisearcher]"(&(cn=$DLPGruppe)(objectclass=group))").FindOne().Properties["cn"]
+        #$adDLPGruppe = ([adsisearcher]"(&(cn=$DLPGruppe)(objectclass=group))").FindOne().Properties["cn"]
         Write-Host "  AD DLP Gruppe: $adDLPGruppe"
-        Write-host ""    
+        Write-host ""
+    } # ForEach
 
 } else {
+    # Domäne erreichbar - Auswertung des net.exe Befehls
+    write-host "net - funktioniert - Domäne verfügbar"
     # Leerzeichen aus der Variable löschen; '*' aus der Variable löschen
     $result = $result.trim(); $result = $result.replace("*", "")
     # '*' an die ermittelten Gruppen anhängen - für die Suche mittels ADSISEARCHER.
@@ -55,4 +80,3 @@ If ( $netERR -like "*Die angegebene Dom*ne ist nicht vorhanden, oder es konnte k
 
 # ADSI Searcher
 # ([adsisearcher]'(&(cn=G-DLP-GVM*)(objectclass=group))').FindOne().Properties["cn"]
-
